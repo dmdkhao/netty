@@ -12,6 +12,8 @@ import java.util.Set;
 
 /**
  * Selector基本使用
+ *
+ *  selectionKey.cancel(); 取消事件
  */
 @Slf4j
 public class Server {
@@ -20,7 +22,6 @@ public class Server {
         try {
             ServerSocketChannel ssc = ServerSocketChannel.open();
             ssc.configureBlocking(false);
-            ssc.bind(new InetSocketAddress(8080));
 
             //1. create selector
             Selector selector = Selector.open();
@@ -31,6 +32,7 @@ public class Server {
             //3. selectionKey interest accept event
             selectionKey.interestOps(SelectionKey.OP_ACCEPT);
 
+            ssc.bind(new InetSocketAddress(8080));
             while (true) {
                 //4. select
                 selector.select();
@@ -42,9 +44,10 @@ public class Server {
                 while (iterator.hasNext()) {
                     SelectionKey key = iterator.next();
                     log.debug("key={}", key.toString());
-                    ServerSocketChannel serverSocketChannel = (ServerSocketChannel) key.channel();
-                    SocketChannel socketChannel = serverSocketChannel.accept();
-                    log.debug("socketChannel={}", socketChannel);
+//                    ServerSocketChannel serverSocketChannel = (ServerSocketChannel) key.channel();
+//                    SocketChannel socketChannel = serverSocketChannel.accept();
+//                    log.debug("socketChannel={}", socketChannel);
+                    key.cancel();
                 }
             }
 
