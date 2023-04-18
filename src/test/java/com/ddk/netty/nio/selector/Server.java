@@ -11,8 +11,8 @@ import java.util.Set;
 
 /**
  * Selector基本使用
- *
- *  selectionKey.cancel(); 取消事件
+ * <p>
+ * selectionKey.cancel(); 取消事件
  */
 @Slf4j
 public class Server {
@@ -43,7 +43,10 @@ public class Server {
                 Iterator<SelectionKey> iterator = selectionKeys.iterator();
                 while (iterator.hasNext()) {
                     SelectionKey key = iterator.next();
+                    // 处理完事件后要remove掉selectionKey
+                    iterator.remove();
                     log.debug("key={}", key.toString());
+
                     if (key.isAcceptable()) {
                         ServerSocketChannel serverSocketChannel = (ServerSocketChannel) key.channel();
                         SocketChannel sc = serverSocketChannel.accept();
@@ -54,11 +57,17 @@ public class Server {
                         scSelectionKey.interestOps(SelectionKey.OP_READ);
                     } else if (key.isReadable()) {
                         // client channel trigger read event
-                        SocketChannel channel = (SocketChannel) key.channel();
+                        SocketChannel sc = (SocketChannel) key.channel();
                         ByteBuffer buffer = ByteBuffer.allocate(16);
-                        channel.read(buffer);
-                        buffer.flip();
-                        ByteBufferUtil.debugRead(buffer);
+                        // 若客户端断开则read返回的值为-1
+                        int read = sc.read(buffer);
+                        if (read == -1) {
+                            log.debug("客户端断开{}", sc);
+                            key.cancel();
+                        } else {
+                            buffer.flip();
+                            ByteBufferUtil.debugRead(buffer);
+                        }
                     }
 //                    key.cancel();
                 }
